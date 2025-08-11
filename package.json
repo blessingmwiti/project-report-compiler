@@ -1,0 +1,113 @@
+{
+  "name": "project-report-compiler",
+  "displayName": "Project Report Compiler",
+  "description": "Automatically track your project work and generate weekly reports from git commits",
+  "version": "0.0.1",
+  "publisher": "Blessing Mwiti",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/blessingmwiti/project-report-compiler.git"
+  },
+  "bugs": {
+    "url": "https://github.com/blessingmwiti/project-report-compiler/issues"
+  },
+  "homepage": "https://github.com/blessingmwiti/project-report-compiler#readme",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other",
+    "Snippets"
+  ],
+  "keywords": [
+    "project tracking",
+    "git commits",
+    "work reports",
+    "productivity"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "projectReportCompiler.generateReport",
+        "title": "Generate Work Report",
+        "category": "Project Report"
+      },
+      {
+        "command": "projectReportCompiler.viewTrackedProjects",
+        "title": "View Tracked Projects",
+        "category": "Project Report"
+      },
+      {
+        "command": "projectReportCompiler.exportReport",
+        "title": "Export Report",
+        "category": "Project Report"
+      },
+      {
+        "command": "projectReportCompiler.openSettings",
+        "title": "Open Settings",
+        "category": "Project Report"
+      }
+    ],
+    "configuration": {
+      "title": "Project Report Compiler",
+      "properties": {
+        "projectReportCompiler.autoTrack": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically track git commits"
+        },
+        "projectReportCompiler.trackInterval": {
+          "type": "number",
+          "default": 300000,
+          "description": "Interval in milliseconds to check for new commits (default: 5 minutes)"
+        },
+        "projectReportCompiler.excludePatterns": {
+          "type": "array",
+          "default": ["node_modules", ".git", "dist", "build"],
+          "description": "Patterns to exclude from project tracking"
+        },
+        "projectReportCompiler.reportFormat": {
+          "type": "string",
+          "enum": ["markdown", "html", "plain"],
+          "default": "markdown",
+          "description": "Default format for generated reports"
+        }
+      }
+    },
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "projectReportCompiler.generateReport"
+        },
+        {
+          "command": "projectReportCompiler.viewTrackedProjects"
+        },
+        {
+          "command": "projectReportCompiler.exportReport"
+        },
+        {
+          "command": "projectReportCompiler.openSettings"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "simple-git": "^3.19.1"
+  }
+}
