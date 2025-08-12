@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 import { simpleGit, SimpleGit } from 'simple-git';
 import { DataManager, ProjectData, CommitData } from './dataManager';
 
@@ -34,8 +35,82 @@ export class ProjectTracker {
         }
 
         for (const folder of vscode.workspace.workspaceFolders) {
-            await this.addProjectToTracking(folder.uri.fsPath);
+            // Find all git repositories in this workspace folder
+            const gitRepositories = await this.findGitRepositories(folder.uri.fsPath);
+            
+            for (const repoPath of gitRepositories) {
+                await this.addProjectToTracking(repoPath);
+            }
         }
+    }
+
+    private async findGitRepositories(rootPath: string): Promise<string[]> {
+        const gitRepositories: string[] = [];
+        const config = vscode.workspace.getConfiguration('projectReportCompiler');
+        const excludePatterns = config.get('excludePatterns', ['node_modules', '.git', 'dist', 'build']);
+        const maxDepth = config.get('maxSearchDepth', 5);
+
+        async function searchDirectory(dirPath: string, depth: number = 0): Promise<void> {
+            // Limit recursion depth to prevent infinite loops and improve performance
+            if (depth > maxDepth) {
+                return;
+            }
+
+            try {
+                const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+                
+                // Check if current directory is a git repository
+                const hasGitDir = entries.some(entry => entry.isDirectory() && entry.name === '.git');
+                if (hasGitDir) {
+                    gitRepositories.push(dirPath);
+                    // Don't recurse into subdirectories of git repos to avoid nested repo issues
+                    return;
+                }
+
+                // Recursively search subdirectories
+                for (const entry of entries) {
+                    if (entry.isDirectory()) {
+                        const subdirName = entry.name;
+                        
+                        // Skip hidden directories and excluded patterns
+                        if (subdirName.startsWith('.') && subdirName !== '.git') {
+                            continue;
+                        }
+                        
+                        // Skip directories that match exclude patterns
+                        if (excludePatterns.some(pattern => subdirName.includes(pattern))) {
+                            continue;
+                        }
+
+                        const subdirPath = path.join(dirPath, subdirName);
+                        await searchDirectory(subdirPath, depth + 1);
+                    }
+                }
+            } catch (error) {
+                // Ignore permission errors and continue searching
+                console.log(`Skipping directory ${dirPath}: ${error}`);
+            }
+        }
+
+        await searchDirectory(rootPath);
+        
+        if (gitRepositories.length > 0) {
+            console.log(`Found ${gitRepositories.length} git repositories in ${rootPath}:`);
+            gitRepositories.forEach(repo => console.log(`  - ${repo}`));
+            
+            // Show user notification about discovered repositories
+            const repoNames = gitRepositories.map(repo => path.basename(repo)).join(', ');
+            vscode.window.showInformationMessage(
+                `Found ${gitRepositories.length} git repository(ies): ${repoNames}`,
+                'View Tracked Projects'
+            ).then(selection => {
+                if (selection === 'View Tracked Projects') {
+                    vscode.commands.executeCommand('projectReportCompiler.viewTrackedProjects');
+                }
+            });
+        }
+        
+        return gitRepositories;
     }
 
     private async addProjectToTracking(projectPath: string): Promise<void> {

@@ -2,6 +2,24 @@
 
 All notable changes to the "Project Report Compiler" extension will be documented in this file.
 
+## [0.1.0] - 2025-08-12
+
+### Added
+- **Recursive Git Repository Discovery**: Now automatically finds and tracks git repositories nested within subdirectories
+- New command: "Refresh & Discover Repositories" to manually search for new git repositories
+- Configurable search depth setting (`maxSearchDepth`) to control how deep to search for repositories
+- Better user feedback with notifications showing discovered repositories
+- Improved performance with intelligent directory exclusion patterns
+
+### Changed
+- Extension now works when opening parent directories containing multiple git repositories
+- Enhanced repository tracking to handle complex project structures
+- Better logging and console output for repository discovery
+
+### Fixed
+- Issue where only top-level git repositories were tracked
+- Extension now properly discovers repositories in nested folder structures
+
 ## [0.0.1] - 2025-08-11
 
 ### Added
