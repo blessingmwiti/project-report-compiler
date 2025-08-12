@@ -32,12 +32,17 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.executeCommand('workbench.action.openSettings', 'projectReportCompiler');
     });
 
+    const refreshRepositoriesCommand = vscode.commands.registerCommand('projectReportCompiler.refreshRepositories', async () => {
+        await refreshRepositories();
+    });
+
     // Add commands to subscription
     context.subscriptions.push(
         generateReportCommand,
         viewTrackedProjectsCommand,
         exportReportCommand,
-        openSettingsCommand
+        openSettingsCommand,
+        refreshRepositoriesCommand
     );
 
     // Start automatic tracking if enabled
@@ -307,6 +312,19 @@ function getEndOfWeek(date: Date): Date {
     const day = d.getDay();
     const diff = d.getDate() - day + (day === 0 ? 0 : 7); // Adjust when day is Sunday
     return new Date(d.setDate(diff));
+}
+
+async function refreshRepositories(): Promise<void> {
+    try {
+        vscode.window.showInformationMessage('Searching for git repositories...');
+        
+        // Re-scan workspace for new repositories
+        await projectTracker.trackCurrentWorkspace();
+        
+        vscode.window.showInformationMessage('Repository scan complete!');
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed to refresh repositories: ${error}`);
+    }
 }
 
 export function deactivate() {
