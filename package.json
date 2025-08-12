@@ -79,7 +79,7 @@
         },
         "projectReportCompiler.reportFormat": {
           "type": "string",
-          "enum": ["markdown", "html", "plain"],
+          "enum": ["markdown", "html", "txt"],
           "default": "markdown",
           "description": "Default format for generated reports"
         },
