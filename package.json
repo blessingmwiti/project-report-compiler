@@ -2,7 +2,7 @@
   "name": "project-report-compiler",
   "displayName": "Project Report Compiler",
   "description": "Automatically track your project work and generate weekly reports from git commits",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "Blessing Mwiti",
   "icon": "icon.png",
   "repository": {
@@ -79,7 +79,7 @@
         },
         "projectReportCompiler.reportFormat": {
           "type": "string",
-          "enum": ["markdown", "html", "plain"],
+          "enum": ["markdown", "html", "txt"],
           "default": "markdown",
           "description": "Default format for generated reports"
         },
