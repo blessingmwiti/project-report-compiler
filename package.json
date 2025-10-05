@@ -2,7 +2,7 @@
   "name": "project-report-compiler",
   "displayName": "Project Report Compiler",
   "description": "Automatically track your project work and generate weekly reports from git commits",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "publisher": "Blessing Mwiti",
   "icon": "icon.png",
   "repository": {
@@ -87,6 +87,11 @@
           "type": "number",
           "default": 5,
           "description": "Maximum directory depth to search for git repositories (default: 5)"
+        },
+        "projectReportCompiler.filterByCurrentUser": {
+          "type": "boolean",
+          "default": true,
+          "description": "Only track and report commits made by the current Git user (default: true)"
         }
       }
     },

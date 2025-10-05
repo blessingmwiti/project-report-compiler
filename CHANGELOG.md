@@ -2,6 +2,25 @@
 
 All notable changes to the "Project Report Compiler" extension will be documented in this file.
 
+## [0.2.0] - 2025-10-05
+
+### Added
+- **Current User Filtering**: Extension now automatically detects the current Git user and filters commits by the logged-in user
+- New setting `filterByCurrentUser` to enable/disable commit filtering by current user (enabled by default)
+- Commits from other contributors are now excluded from reports when filtering is enabled
+- Git user email detection for each repository to identify the current user
+- Console logging to show which commits are being filtered and the current user email
+
+### Changed
+- Reports now only include commits made by the current Git user (when filtering is enabled)
+- Enhanced commit tracking to respect user identity across different repositories
+- Improved logging for better debugging of user filtering
+
+### Benefits
+- More accurate personal work reports by excluding commits from other team members
+- Better suited for individual reporting and tracking
+- Option to disable filtering if you want to see all commits
+
 ## [0.1.1] - 2025-08-25
 
 - **MAJOR: Simplified Report Format**: Complete redesign to clean, minimal format

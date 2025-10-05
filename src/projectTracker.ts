@@ -7,6 +7,7 @@ import { DataManager, ProjectData, CommitData } from './dataManager';
 export class ProjectTracker {
     private trackingInterval: NodeJS.Timeout | undefined;
     private trackedProjects: Map<string, SimpleGit> = new Map();
+    private currentUserEmails: Map<string, string> = new Map(); // Map project path to user email
 
     constructor(private dataManager: DataManager) {}
 
@@ -130,6 +131,13 @@ export class ProjectTracker {
             // Store git instance for this project
             this.trackedProjects.set(projectPath, git);
 
+            // Get and store current user email for this repository
+            const userEmail = await this.getCurrentUserEmail(git);
+            if (userEmail) {
+                this.currentUserEmails.set(projectPath, userEmail);
+                console.log(`Git user for ${projectName}: ${userEmail}`);
+            }
+
             // Get existing project data or create new
             let projectData = await this.dataManager.getProject(projectName);
             if (!projectData) {
@@ -146,7 +154,7 @@ export class ProjectTracker {
             }
 
             // Get recent commits
-            await this.fetchRecentCommits(projectData, git);
+            await this.fetchRecentCommits(projectData, git, projectPath);
             
             // Save project data
             await this.dataManager.saveProject(projectData);
@@ -164,7 +172,7 @@ export class ProjectTracker {
                 const projectData = await this.dataManager.getProject(projectName);
                 
                 if (projectData) {
-                    const hasNewCommits = await this.fetchRecentCommits(projectData, git);
+                    const hasNewCommits = await this.fetchRecentCommits(projectData, git, projectPath);
                     if (hasNewCommits) {
                         projectData.lastActivity = new Date().toISOString();
                         await this.dataManager.saveProject(projectData);
@@ -185,7 +193,7 @@ export class ProjectTracker {
         }
     }
 
-    private async fetchRecentCommits(projectData: ProjectData, git: SimpleGit): Promise<boolean> {
+    private async fetchRecentCommits(projectData: ProjectData, git: SimpleGit, projectPath: string): Promise<boolean> {
         try {
             // Get the last commit hash we have stored
             const lastStoredCommit = projectData.commits.length > 0 
@@ -196,6 +204,11 @@ export class ProjectTracker {
             const log = await git.log({ maxCount: 50 });
             const commits = log.all;
 
+            // Check if user filtering is enabled
+            const config = vscode.workspace.getConfiguration('projectReportCompiler');
+            const filterByCurrentUser = config.get('filterByCurrentUser', true);
+            const currentUserEmail = this.currentUserEmails.get(projectPath);
+
             let newCommitsCount = 0;
             const newCommits: CommitData[] = [];
 
@@ -203,6 +216,12 @@ export class ProjectTracker {
                 // Stop if we reach a commit we already have
                 if (lastStoredCommit && commit.hash === lastStoredCommit) {
                     break;
+                }
+
+                // Skip commits from other users if filtering is enabled
+                if (filterByCurrentUser && currentUserEmail && commit.author_email !== currentUserEmail) {
+                    console.log(`Skipping commit ${commit.hash.substring(0, 7)} by ${commit.author_email} (current user: ${currentUserEmail})`);
+                    continue;
                 }
 
                 // Skip merge commits if they don't have meaningful messages
@@ -255,6 +274,23 @@ export class ProjectTracker {
         } catch (error) {
             console.error(`Failed to fetch commits: ${error}`);
             return false;
+        }
+    }
+
+    private async getCurrentUserEmail(git: SimpleGit): Promise<string | null> {
+        try {
+            // Get the git user email configured for this repository
+            const email = await git.getConfig('user.email');
+            if (email && email.value) {
+                return email.value;
+            }
+            
+            // If no email is configured, return null
+            console.log('No git user.email configured for this repository');
+            return null;
+        } catch (error) {
+            console.error(`Failed to get git user email: ${error}`);
+            return null;
         }
     }
 
@@ -313,9 +349,15 @@ export class ProjectTracker {
             throw new Error(`${projectData.path} is not a git repository`);
         }
 
+        // Get and update current user email
+        const userEmail = await this.getCurrentUserEmail(git);
+        if (userEmail) {
+            this.currentUserEmails.set(projectData.path, userEmail);
+        }
+
         // Clear existing commits and fetch all commits fresh
         projectData.commits = [];
-        await this.fetchRecentCommits(projectData, git);
+        await this.fetchRecentCommits(projectData, git, projectData.path);
         projectData.lastActivity = new Date().toISOString();
         
         await this.dataManager.saveProject(projectData);
